@@ -1,0 +1,29 @@
+scalar Time
+
+enum UserRole {
+  PATIENT
+  ADMIN
+}
+
+type User {
+  id: ID!
+  name: String!
+  email: String!
+  role: UserRole!
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+type Doctor {
+  id: ID!
+  name: String!
+  specialty: String!
+  bio: String
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+type Query {
+  me: User!
+  doctors: [Doctor!]!
+}
