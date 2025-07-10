@@ -6,25 +6,47 @@ package graph
 
 import (
 	"context"
-	"doctor-booking-system/internal/graphql/graph/model"
+	"doctor-booking-system/internal/db/models"
+	"doctor-booking-system/internal/utils"
 	"fmt"
 )
 
-// CreateTodo is the resolver for the createTodo field.
-func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) (*model.Todo, error) {
-	panic(fmt.Errorf("not implemented: CreateTodo - createTodo"))
-}
-
-// Todos is the resolver for the todos field.
-func (r *queryResolver) Todos(ctx context.Context) ([]*model.Todo, error) {
-	panic(fmt.Errorf("not implemented: Todos - todos"))
-}
-
-// Mutation returns MutationResolver implementation.
-func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
-
-// Query returns QueryResolver implementation.
-func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
-
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+
+func (r *queryResolver) Me(ctx context.Context) (*models.User, error) {
+	user, ok := utils.GetUserFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("unauthorized")
+	}
+
+	return &models.User{
+		ID:        fmt.Sprintf("%d", user.ID),
+		Name:      user.Name,
+		Email:     user.Email,
+		Role:      models.UserRole(user.Role),
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+	}, nil
+}
+
+func (r *queryResolver) Doctors(ctx context.Context) ([]*models.Doctor, error) {
+	var doctors []models.Doctor
+	if err := r.DB.Gorm.Find(&doctors).Error; err != nil {
+		return nil, err
+	}
+
+	var result []*models.Doctor
+	for _, d := range doctors {
+		result = append(result, &models.Doctor{
+			ID:        fmt.Sprintf("%d", d.ID),
+			Name:      d.Name,
+			Specialty: d.Specialty,
+			Bio:       d.Bio,
+			CreatedAt: d.CreatedAt,
+			UpdatedAt: d.UpdatedAt,
+		})
+	}
+
+	return result, nil
+}
